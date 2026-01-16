@@ -28,9 +28,10 @@
         .btn-outline { transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem; }
         .icon-btn { padding: 2px; border-radius: 4px; transition: all 0.2s; cursor: pointer; }
         
-        /* Grid Layout: 8 Columns Fixed (7 Days + 1 Stat) */
+        /* Grid Layout: Dynamic based on JS */
         .calendar-grid {
             display: grid;
+            /* Default fallback */
             grid-template-columns: repeat(8, minmax(100px, 1fr)); 
             gap: 0.5rem;
         }
@@ -46,8 +47,8 @@
         #toast.show { visibility: visible; opacity: 1; }
         
         @media (max-width: 1024px) {
-            .calendar-grid { min-width: 900px; } 
             .scroll-container { overflow-x: auto; padding-bottom: 10px; }
+            .calendar-grid { min-width: 900px; } /* Ensures grid doesn't break on mobile */
         }
     </style>
 </head>
@@ -55,10 +56,9 @@
 
     <div class="w-full max-w-[1400px] space-y-6">
         
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div class="flex flex-row items-center justify-between">
             <div>
-                <h1 class="text-2xl font-bold tracking-tight">TOG Tracker</h1>
-                <p class="text-xs text-slate-500 dark:text-slate-400">Productivity & Time Converter</p>
+                <h1 class="text-xl font-bold tracking-tight">TOG Tracker</h1>
             </div>
             
             <div class="flex items-center gap-3">
@@ -74,7 +74,7 @@
         </div>
 
         <div class="grid md:grid-cols-2 gap-4">
-            <div class="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 p-4 rounded-xl flex items-center gap-4">
+            <div class="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 p-4 rounded-xl flex items-center gap-4 shadow-sm">
                 <div class="min-w-[90px] text-xs font-bold uppercase text-slate-400">TIME TO TOG</div>
                 <input type="number" id="c1_h" class="input-field w-16 bg-slate-50 border border-slate-200 text-slate-900 rounded p-1 text-center dark:bg-slate-950 dark:border-slate-700 dark:text-white" placeholder="H">
                 <span class="text-slate-300">:</span>
@@ -84,7 +84,7 @@
                 </div>
             </div>
 
-            <div class="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 p-4 rounded-xl flex items-center gap-4">
+            <div class="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 p-4 rounded-xl flex items-center gap-4 shadow-sm">
                 <div class="min-w-[90px] text-xs font-bold uppercase text-slate-400">TOG TO TIME</div>
                 <input type="number" id="c2_d" class="input-field w-24 bg-slate-50 border border-slate-200 text-slate-900 rounded p-1 text-center dark:bg-slate-950 dark:border-slate-700 dark:text-white" placeholder="5.2">
                 <div class="flex-1 text-right">
@@ -93,39 +93,43 @@
             </div>
         </div>
 
-        <div class="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 p-6 rounded-xl shadow-sm">
+        <div class="bg-white border border-slate-200 dark:bg-slate-900 dark:border-slate-800 p-4 md:p-6 rounded-xl shadow-sm">
             
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
-                <div class="flex items-center gap-2">
-                    <button onclick="changeMonth(-1)" class="btn-outline border-slate-200 text-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 px-2 h-9"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
-                    <button onclick="goToToday()" class="btn-outline border-slate-200 text-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 text-sm h-9 font-bold w-32 justify-center">Today</button>
-                    <button onclick="changeMonth(1)" class="btn-outline border-slate-200 text-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 px-2 h-9"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white ml-2" id="monthLabel">...</h2>
+            <div class="flex justify-center items-center gap-4 mb-6 relative">
+                <button onclick="changeMonth(-1)" class="btn-outline border-slate-200 text-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 px-2 h-9"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                
+                <div class="text-center w-48">
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white" id="monthLabel">...</h2>
+                    <button onclick="goToToday()" class="text-[10px] font-bold uppercase text-blue-500 hover:text-blue-700 mt-0.5 tracking-wider">Jump to Today</button>
                 </div>
 
-                <div class="flex gap-6 justify-end bg-slate-50 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
-                    <div class="text-right">
-                        <span class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Total (View)</span>
-                        <span id="monthTotal" class="text-2xl font-bold text-slate-900 dark:text-white leading-none">0.0</span>
+                <button onclick="changeMonth(1)" class="btn-outline border-slate-200 text-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 px-2 h-9"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+            </div>
+
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-6 border-t border-b border-slate-100 dark:border-slate-800 py-3">
+                
+                <div class="flex flex-col items-center md:items-start gap-1">
+                    <span class="text-[10px] uppercase font-bold text-slate-400">Visible Days</span>
+                    <div id="dayToggles" class="flex gap-1">
+                        </div>
+                </div>
+
+                <div class="flex gap-6 items-center bg-slate-50 dark:bg-slate-800/50 px-5 py-2 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <div class="text-center md:text-right">
+                        <span class="block text-[10px] uppercase font-bold text-slate-400">Total (View)</span>
+                        <span id="monthTotal" class="text-xl font-bold text-slate-900 dark:text-white leading-none">0.0</span>
                     </div>
-                    <div class="text-right">
-                        <span class="block text-[10px] uppercase font-bold text-slate-400 mb-1">Avg (Active)</span>
-                        <span id="monthAvg" class="text-2xl font-bold text-blue-600 dark:text-blue-400 leading-none">0.0</span>
+                    <div class="w-px h-8 bg-slate-200 dark:bg-slate-700"></div>
+                    <div class="text-center md:text-right">
+                        <span class="block text-[10px] uppercase font-bold text-slate-400">Avg (Active)</span>
+                        <span id="monthAvg" class="text-xl font-bold text-blue-600 dark:text-blue-400 leading-none">0.0</span>
                     </div>
                 </div>
             </div>
 
             <div class="scroll-container">
-                <div class="calendar-grid mb-2">
-                    <div class="text-center text-xs font-bold text-slate-400 uppercase py-1">Mon</div>
-                    <div class="text-center text-xs font-bold text-slate-400 uppercase py-1">Tue</div>
-                    <div class="text-center text-xs font-bold text-slate-400 uppercase py-1">Wed</div>
-                    <div class="text-center text-xs font-bold text-slate-400 uppercase py-1">Thu</div>
-                    <div class="text-center text-xs font-bold text-slate-400 uppercase py-1">Fri</div>
-                    <div class="text-center text-xs font-bold text-slate-400 uppercase py-1">Sat</div>
-                    <div class="text-center text-xs font-bold text-slate-400 uppercase py-1">Sun</div>
-                    <div class="text-center text-xs font-bold text-emerald-500 uppercase py-1 border-l border-slate-100 dark:border-slate-800">Weekly</div>
-                </div>
+                <div class="calendar-grid mb-2" id="headerRow">
+                    </div>
 
                 <div class="calendar-grid" id="calendarGrid">
                     </div>
@@ -155,16 +159,14 @@
         // --- VARS & STORAGE ---
         let viewDate = new Date(); 
         let lastCalculatedDecimal = 0.0;
-        const STORAGE_KEY = 'tog_tracker_final_v8'; 
+        const STORAGE_KEY = 'tog_tracker_v11'; 
         let storedData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+        let dayVisibility = [true, true, true, true, true, true, true]; 
 
         function saveData(key, value) {
-            // Treat empty string as "delete", but keep "0" as a valid value
             if(value === "") { delete storedData[key]; } 
             else { storedData[key] = value; }
             localStorage.setItem(STORAGE_KEY, JSON.stringify(storedData));
-            
-            // CRITICAL FIX: Re-render to update the Weekly Stats column immediately
             renderCalendar(true); 
         }
 
@@ -198,8 +200,13 @@
         [c1_h, c1_m].forEach(el => el.addEventListener('input', calcTime));
         c2_d.addEventListener('input', calcDecimal);
 
-        // --- CALENDAR LOGIC ---
+        // --- VISIBILITY ---
+        function toggleDay(index) {
+            dayVisibility[index] = !dayVisibility[index];
+            renderCalendar();
+        }
 
+        // --- CALENDAR LOGIC ---
         function getMonday(d) {
             d = new Date(d);
             const day = d.getDay();
@@ -209,22 +216,58 @@
 
         function formatDateKey(d) { return d.toISOString().split('T')[0]; }
 
-        // Added preserveFocus param to allow seamless typing
         function renderCalendar(preserveFocus = false) {
-            
-            // Identify focused element before destroy
             let focusedKey = null;
-            let focusedType = null; // 'main' or 'bonus'
-            if (preserveFocus && document.activeElement) {
-                if (document.activeElement.dataset.key) {
-                    focusedKey = document.activeElement.dataset.key;
-                    focusedType = document.activeElement.dataset.type;
-                }
+            let focusedType = null;
+            if (preserveFocus && document.activeElement && document.activeElement.dataset.key) {
+                focusedKey = document.activeElement.dataset.key;
+                focusedType = document.activeElement.dataset.type;
             }
 
-            const grid = document.getElementById('calendarGrid');
-            grid.innerHTML = ''; 
+            // 1. Render Toggles
+            const toggleContainer = document.getElementById('dayToggles');
+            const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            toggleContainer.innerHTML = '';
+            dayNames.forEach((name, idx) => {
+                const isVisible = dayVisibility[idx];
+                const btn = document.createElement('button');
+                const activeClass = isVisible 
+                    ? "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800" 
+                    : "bg-slate-50 text-slate-300 border-slate-100 dark:bg-slate-900 dark:text-slate-700 dark:border-slate-800";
+                
+                btn.className = `flex items-center justify-center w-8 h-8 rounded text-[10px] font-bold border transition-colors ${activeClass}`;
+                btn.onclick = () => toggleDay(idx);
+                // First letter only
+                btn.innerText = name.charAt(0);
+                btn.title = isVisible ? `Hide ${name}` : `Show ${name}`;
+                toggleContainer.appendChild(btn);
+            });
 
+            // 2. Adjust Grid
+            const visibleCount = dayVisibility.filter(Boolean).length;
+            const gridCols = visibleCount + 1; 
+            const headerRow = document.getElementById('headerRow');
+            const grid = document.getElementById('calendarGrid');
+            const style = `grid-template-columns: repeat(${gridCols}, minmax(100px, 1fr));`;
+            headerRow.style.cssText = style;
+            grid.style.cssText = style;
+
+            // 3. Headers
+            headerRow.innerHTML = '';
+            dayNames.forEach((name, idx) => {
+                if(!dayVisibility[idx]) return; 
+                const div = document.createElement('div');
+                div.className = "text-center text-xs font-bold text-slate-400 uppercase py-1";
+                div.innerText = name;
+                headerRow.appendChild(div);
+            });
+            const wkDiv = document.createElement('div');
+            wkDiv.className = "text-center text-xs font-bold text-emerald-500 uppercase py-1 border-l border-slate-100 dark:border-slate-800";
+            wkDiv.innerText = "Weekly";
+            headerRow.appendChild(wkDiv);
+
+            // 4. Grid Body
+            grid.innerHTML = ''; 
             const year = viewDate.getFullYear();
             const month = viewDate.getMonth();
             const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -235,15 +278,11 @@
             const startDate = getMonday(firstDayOfMonth);
             const endDate = new Date(lastDayOfMonth);
             const endDay = endDate.getDay(); 
-            if (endDay !== 0) {
-                endDate.setDate(endDate.getDate() + (7 - endDay));
-            }
+            if (endDay !== 0) endDate.setDate(endDate.getDate() + (7 - endDay));
 
             const todayKey = formatDateKey(new Date());
 
             let currentLoopDate = new Date(startDate);
-
-            // Month Stats Accumulators
             let monthTotal = 0;
             let monthActiveDays = 0;
 
@@ -256,77 +295,70 @@
                 for (let i = 0; i < 7; i++) {
                     const dateKey = formatDateKey(currentLoopDate);
                     const bonusKey = `bonus_${dateKey}`;
-                    
-                    // Retrieve raw values (string) to check for emptiness
                     const rawVal = storedData[dateKey]; 
                     const rawBonus = storedData[bonusKey];
-
                     const val = rawVal !== undefined ? rawVal : '';
                     const bonusVal = rawBonus !== undefined ? rawBonus : '';
                     
                     const isToday = dateKey === todayKey;
                     const isCurrentMonth = currentLoopDate.getMonth() === month;
-
-                    // Math
                     const numVal = parseFloat(val) || 0;
                     const numBonus = parseFloat(bonusVal) || 0;
                     const dailySum = numVal + numBonus;
 
-                    weekTotal += dailySum;
-                    
-                    // Month Stats Logic
-                    if(isCurrentMonth) {
-                        monthTotal += dailySum;
-                        if (rawVal !== undefined && rawVal !== "") monthActiveDays++;
-                    }
+                    if (dayVisibility[i]) {
+                        weekTotal += dailySum;
+                        
+                        if(isCurrentMonth) {
+                            monthTotal += dailySum;
+                            if (rawVal !== undefined && rawVal !== "") monthActiveDays++;
+                        }
+                        if (rawVal !== undefined && rawVal !== "") {
+                            weekActiveDays++;
+                        }
 
-                    // Week Stats Logic: Count active if Main Input is NOT empty (even if 0)
-                    if (rawVal !== undefined && rawVal !== "") {
-                        weekActiveDays++;
-                    }
+                        const baseOpacity = isCurrentMonth ? 'opacity-100' : 'opacity-40 hover:opacity-100 transition-opacity';
+                        const cardBg = isToday ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-white dark:bg-slate-900';
+                        const cardBorder = isToday ? 'border-blue-500 ring-1 ring-blue-500' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700';
+                        const dayText = isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-400 font-medium';
+                        const footerBg = 'bg-yellow-50 dark:bg-yellow-900/10';
 
-                    const baseOpacity = isCurrentMonth ? 'opacity-100' : 'opacity-40 hover:opacity-100 transition-opacity';
-                    const cardBg = isToday ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-white dark:bg-slate-900';
-                    const cardBorder = isToday ? 'border-blue-500 ring-1 ring-blue-500' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700';
-                    const dayText = isToday ? 'text-blue-600 dark:text-blue-400 font-bold' : 'text-slate-500 dark:text-slate-400 font-medium';
-                    const footerBg = 'bg-yellow-50 dark:bg-yellow-900/10';
-
-                    const card = document.createElement('div');
-                    card.className = `day-card border ${cardBorder} ${cardBg} ${baseOpacity}`;
-                    card.innerHTML = `
-                        <div class="day-header">
-                            <span class="${dayText}">${currentLoopDate.getDate()}</span>
-                            <button onclick="pasteValue('${dateKey}')" class="icon-btn text-slate-300 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800">
-                                <i data-lucide="arrow-down-to-line" class="w-3 h-3"></i>
-                            </button>
-                        </div>
-                        <div class="day-body">
-                            <input type="number" step="0.1" 
-                                data-key="${dateKey}" data-type="main"
-                                class="input-field bg-transparent border-none font-mono font-bold text-center text-xl w-full text-slate-900 dark:text-white" 
-                                value="${val}" onchange="handleInputChange('${dateKey}', this.value)">
-                        </div>
-                        <div class="day-footer ${footerBg}">
-                            <div class="flex items-center w-full px-1">
-                                <button onclick="pasteValue('${bonusKey}')" class="icon-btn text-yellow-500 hover:text-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 mr-1">
-                                    <i data-lucide="plus" class="w-3 h-3"></i>
+                        const card = document.createElement('div');
+                        card.className = `day-card border ${cardBorder} ${cardBg} ${baseOpacity}`;
+                        card.innerHTML = `
+                            <div class="day-header">
+                                <span class="${dayText}">${currentLoopDate.getDate()}</span>
+                                <button onclick="pasteValue('${dateKey}')" class="icon-btn text-slate-300 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                    <i data-lucide="arrow-down-to-line" class="w-3 h-3"></i>
                                 </button>
-                                <input type="number" step="0.1" 
-                                    data-key="${dateKey}" data-type="bonus"
-                                    class="input-field bg-transparent border-none font-mono font-bold text-center text-xs w-full text-yellow-700 dark:text-yellow-500 placeholder-yellow-200" 
-                                    value="${bonusVal}" placeholder="-" onchange="handleInputChange('${bonusKey}', this.value)">
                             </div>
-                        </div>
-                    `;
-                    weekNodes.push(card);
+                            <div class="day-body">
+                                <input type="number" step="0.1" 
+                                    data-key="${dateKey}" data-type="main"
+                                    class="input-field bg-transparent border-none font-mono font-bold text-center text-xl w-full text-slate-900 dark:text-white" 
+                                    value="${val}" onchange="handleInputChange('${dateKey}', this.value)">
+                            </div>
+                            <div class="day-footer ${footerBg}">
+                                <div class="flex items-center w-full px-1">
+                                    <button onclick="pasteValue('${bonusKey}')" class="icon-btn text-yellow-500 hover:text-yellow-700 hover:bg-yellow-100 dark:hover:bg-yellow-900/50 mr-1">
+                                        <i data-lucide="plus" class="w-3 h-3"></i>
+                                    </button>
+                                    <input type="number" step="0.1" 
+                                        data-key="${dateKey}" data-type="bonus"
+                                        class="input-field bg-transparent border-none font-mono font-bold text-center text-xs w-full text-yellow-700 dark:text-yellow-500 placeholder-yellow-200" 
+                                        value="${bonusVal}" placeholder="-" onchange="handleInputChange('${bonusKey}', this.value)">
+                                </div>
+                            </div>
+                        `;
+                        weekNodes.push(card);
+                    }
                     currentLoopDate.setDate(currentLoopDate.getDate() + 1);
                 }
 
                 weekNodes.forEach(node => grid.appendChild(node));
 
-                // 8th Column: Weekly Stats
+                // Weekly Stats
                 const weekAvg = weekActiveDays > 0 ? (weekTotal / weekActiveDays) : 0;
-                
                 const statCard = document.createElement('div');
                 statCard.className = "stats-card bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700";
                 statCard.innerHTML = `
@@ -344,21 +376,15 @@
                 grid.appendChild(statCard);
             }
 
-            // Update Month Stats DOM
+            // Month Stats
             const monthAvg = monthActiveDays > 0 ? (monthTotal / monthActiveDays) : 0;
             document.getElementById('monthTotal').innerText = monthTotal.toFixed(2);
             document.getElementById('monthAvg').innerText = monthAvg.toFixed(2);
 
             lucide.createIcons();
-
-            // Restore Focus logic
             if (focusedKey) {
-                // Find input with matching data attributes
-                const selector = `input[data-key="${focusedKey}"][data-type="${focusedType}"]`;
-                const el = document.querySelector(selector);
-                if (el) {
-                    el.focus();
-                }
+                const el = document.querySelector(`input[data-key="${focusedKey}"][data-type="${focusedType}"]`);
+                if (el) el.focus();
             }
         }
 
@@ -368,7 +394,6 @@
             saveData(key, lastCalculatedDecimal);
             showToast("Pasted!");
         }
-
         function changeMonth(offset) {
             viewDate.setMonth(viewDate.getMonth() + offset);
             renderCalendar();
@@ -382,5 +407,13 @@
 
         renderCalendar();
     </script>
+    </div>
+    <footer id="main-footer" class="mt-10 flex justify-center items-center gap-10 relative z-10">
+        <a href="mailto:arunthomas04042001@gmail.com" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400" aria-label="Contact Developer" data-i18n-aria-label="reachOut">
+            <i class="fas fa-envelope text-base"></i>
+            <span data-i18n="reachOut" class="hidden sm:inline">Contact Developer</span>
+        </a>
+    </footer>
+</div>
 </body>
 </html>
