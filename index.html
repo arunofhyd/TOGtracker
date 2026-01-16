@@ -153,6 +153,9 @@
                     <i data-lucide="moon" class="w-4 h-4 hidden dark:block"></i>
                     <i data-lucide="sun" class="w-4 h-4 block dark:hidden"></i>
                 </button>
+                <button id="logout-btn" class="p-2 rounded-md bg-white border border-slate-200 text-red-500 hover:bg-red-50 dark:bg-slate-900 dark:border-slate-800 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors" title="Sign Out">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                </button>
             </div>
         </div>
 
@@ -327,6 +330,14 @@
             document.getElementById('eye-closed-icon').classList.toggle('hidden');
         });
 
+        document.getElementById('logout-btn').addEventListener('click', async () => {
+            if (auth.currentUser) {
+                localStorage.removeItem(STORAGE_KEY);
+                await signOut(auth);
+            }
+            window.location.reload();
+        });
+
         // Sync Logic
         async function syncData(user) {
             try {
@@ -335,6 +346,9 @@
                 if (docSnap.exists()) {
                     const cloudData = docSnap.data();
                     storedData = { ...storedData, ...cloudData };
+                    if (storedData._dayVisibility) {
+                        dayVisibility = storedData._dayVisibility;
+                    }
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(storedData));
                     renderCalendar();
                 } else {
@@ -382,7 +396,7 @@
         let lastCalculatedDecimal = 0.0;
         const STORAGE_KEY = 'tog_tracker_v11'; 
         let storedData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-        let dayVisibility = [true, true, true, true, true, true, true]; 
+        let dayVisibility = storedData._dayVisibility || [true, true, true, true, true, true, true];
 
         async function saveData(key, value) {
             if(value === "") { delete storedData[key]; } 
@@ -435,7 +449,7 @@
         // --- VISIBILITY ---
         window.toggleDay = function(index) {
             dayVisibility[index] = !dayVisibility[index];
-            renderCalendar();
+            saveData('_dayVisibility', dayVisibility);
         }
 
         // --- CALENDAR LOGIC ---
