@@ -19,6 +19,20 @@
                 }
             }
         }
+
+        // Theme Init (Avoid FOUC)
+        try {
+            const userPref = localStorage.getItem('theme');
+            const systemPref = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (userPref === 'dark' || (!userPref && systemPref)) { document.documentElement.classList.add('dark'); }
+            else { document.documentElement.classList.remove('dark'); }
+        } catch(e) { console.error(e); }
+
+        window.toggleTheme = function() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) { html.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
+            else { html.classList.add('dark'); localStorage.setItem('theme', 'dark'); }
+        }
     </script>
 
     <style>
@@ -150,8 +164,10 @@
                     <span id="globalMemory" class="font-mono font-bold text-blue-600 dark:text-blue-400 text-sm">0.0</span>
                 </div>
                 <button onclick="toggleTheme()" class="p-2 rounded-md bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors">
-                    <i data-lucide="moon" class="w-4 h-4 hidden dark:block"></i>
-                    <i data-lucide="sun" class="w-4 h-4 block dark:hidden"></i>
+                    <!-- Sun Icon (Show in Dark Mode) -->
+                    <svg class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <!-- Moon Icon (Show in Light Mode) -->
+                    <svg class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
                 </button>
 
                 <!-- User Avatar & Menu -->
@@ -269,10 +285,75 @@
         const passwordInput = document.getElementById('password-input');
         const authError = document.getElementById('auth-error-message');
 
+        // --- AVATAR LOGIC ---
+        function getAvatar(user) {
+            if (!user) {
+                // Guest - Simple user icon SVG
+                return `<div class="bg-gray-200 dark:bg-slate-800 w-full h-full flex items-center justify-center text-slate-500 dark:text-slate-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-user"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>`;
+            }
+
+            const email = user.email || "?";
+            const letter = email.charAt(0).toUpperCase();
+
+            // Generate deterministic color based on UID
+            const uid = user.uid;
+            let hash = 0;
+            for (let i = 0; i < uid.length; i++) {
+                hash = uid.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const c1 = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+            const c2 = ((hash >> 4) & 0x00FFFFFF).toString(16).toUpperCase();
+            const color1 = "#" + "00000".substring(0, 6 - c1.length) + c1;
+            const color2 = "#" + "00000".substring(0, 6 - c2.length) + c2;
+
+            return `<div style="background: linear-gradient(135deg, ${color1}, ${color2});" class="w-full h-full flex items-center justify-center text-white font-bold text-sm shadow-inner">
+                ${letter}
+            </div>`;
+        }
+
+        function renderHeader(user) {
+            const avatarBtn = document.getElementById('user-avatar-btn');
+            const emailLabel = document.getElementById('menu-user-email');
+
+            if(avatarBtn) avatarBtn.innerHTML = getAvatar(user);
+            if(emailLabel) emailLabel.innerText = user ? user.email : "Guest Session";
+        }
+
+        // Dropdown Toggle Logic
+        function initAvatarDropdown() {
+            const menuContainer = document.getElementById('user-menu-container');
+            const dropdown = document.getElementById('user-dropdown');
+            const avatarBtn = document.getElementById('user-avatar-btn');
+
+            if (avatarBtn && dropdown && menuContainer) {
+                // Toggle on click
+                avatarBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const isClosed = dropdown.classList.contains('opacity-0');
+                    if(isClosed) {
+                        dropdown.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                    } else {
+                        dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                    }
+                };
+
+                // Close when clicking outside
+                document.onclick = (e) => {
+                    if(!menuContainer.contains(e.target)) {
+                        dropdown.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                    }
+                };
+            }
+        }
+
         function showApp() {
             authContainer.classList.add('hidden');
             appContainer.classList.remove('hidden');
             renderCalendar();
+            // Initialize dropdown listeners once app is shown or scripts loaded
+            initAvatarDropdown();
         }
 
         function showAuth() {
@@ -338,6 +419,7 @@
 
         document.getElementById('offline-btn').addEventListener('click', () => {
             showApp();
+            renderHeader(null);
         });
 
         document.getElementById('password-toggle').addEventListener('click', () => {
@@ -386,25 +468,13 @@
 
             if (user) {
                 showApp();
+                renderHeader(user);
                 syncData(user);
             }
             // If no user, stay on auth screen.
         });
 
         // --- ORIGINAL APP LOGIC ---
-
-        function initTheme() {
-            const userPref = localStorage.getItem('theme');
-            const systemPref = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            if (userPref === 'dark' || (!userPref && systemPref)) { document.documentElement.classList.add('dark'); } 
-            else { document.documentElement.classList.remove('dark'); }
-        }
-        window.toggleTheme = function() {
-            const html = document.documentElement;
-            if (html.classList.contains('dark')) { html.classList.remove('dark'); localStorage.setItem('theme', 'light'); } 
-            else { html.classList.add('dark'); localStorage.setItem('theme', 'dark'); }
-        }
-        initTheme();
         
         lucide.createIcons();
 
